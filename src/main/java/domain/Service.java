@@ -33,6 +33,6 @@ public class Service {
     }
 
     public String toString () {
-        return "Услуга: " + name + "\nСтоимость: " + cost;
+        return "Услуга: " + name + "  Стоимость: " + cost;
     }
 }

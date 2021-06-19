@@ -1,9 +1,9 @@
 package dao;
 
-import domain.Service;
-
 import java.sql.*;
 import java.util.ArrayList;
+import configs.MessageСonstants;
+
 import java.util.List;
 
 public class ServiceDao {
@@ -32,12 +32,98 @@ public class ServiceDao {
                             : 0;
     }
 
-    public Service get(int id) {
-        List<Object> resultList = getResultSet("SELECT * FROM services_table WHERE id = ?",
-                                                                    getParameters(String.valueOf(id)));
+    public List <Object> getAllServices() {
+        List<Object> resultList = getResultSet("SELECT * FROM telephone_exchange.service_tb;",3);
+        return resultList.size() > 0 ? resultList
+                                       : null;
+    }
+
+    public List <Object> getAllServices (String login) {
+        int idSub = getIdSub(login);
+        List<Object> resultList = getResultSet("SELECT * FROM telephone_exchange.service_tb b\n" +
+                "inner join telephone_exchange.sub_service_tb e ON \n" +
+                "b.id_service = e.id_service join telephone_exchange.sub_tb f ON e.id_sub = f.id_sub",8);
+        return resultList.size() > 0 ? resultList
+                                        : null;
+    }
+    public int addServiceToSub (String login,int idService) {
+        if (isServiceExist(idService)) {
+            if(!(isSubHaveThisService(login,idService))) {
+
+                int idSub = getIdSub(login);
+                update("INSERT INTO `telephone_exchange`.`sub_service_tb` (`id_service`, `id_sub`) VALUES (?,?)",
+                        getParameters(String.valueOf(idService), String.valueOf(idSub)));
+                return MessageСonstants.SUCSESS;
+
+            } else return MessageСonstants.SUB_ALREADY_HAVE_THIS_SERVICE;
+        } else return MessageСonstants.SERVICE_NOT_EXIST;
+    }
+
+    public int deleteSubService (int service, String subLogin) {
+           if (isServiceExist(service)) {
+               if (isSubHaveThisService(subLogin,service)) {
+
+                   int idSub = getIdSub(subLogin);
+                   delete("DELETE FROM `telephone_exchange`.`sub_service_tb` WHERE id_Service = ? AND id_sub = ?",
+                           getParameters(String.valueOf(service), String.valueOf(idSub)));
+                   return MessageСonstants.SUCSESS;
+               }else return MessageСonstants.SUB_HAVE_NOT_THIS_SERVICE;
+           } else return MessageСonstants.SERVICE_NOT_EXIST;
+    }
+
+    private int getIdSub(String login) {
+        List<Object> resultList = getResultSet("SELECT * FROM telephone_exchange.sub_tb WHERE login = ?",
+                getParameters(login));
         return resultList.size() > 0 ?
-                new Service((String) resultList.get(0),(int) resultList.get(1),(int) resultList.get(2))
-                : null;
+                             (int) resultList.get(0)
+                             : 0;
+    }
+
+    private boolean isServiceExist (int id) {
+        List<Object> resultList = getResultSet("SELECT * FROM telephone_exchange.service_tb WHERE id_service = ?",
+                                                                            getParameters(String.valueOf(id)));
+        return resultList.size() != 0;
+    }
+
+    private boolean isSubHaveThisService(String subLogin, int idService) {
+        int idSub = getIdSub(subLogin);
+        List<Object> resultList = getResultSet("SELECT * FROM telephone_exchange.sub_service_tb WHERE id_service = ? AND id_sub = ?",
+                getParameters(String.valueOf(idService),String.valueOf(idSub)));
+        return resultList.size() != 0;
+    }
+
+    private void update (String sqlRequest, Object [] parameters) {
+        try (Connection connection = getDbConnection()) {
+            PreparedStatement preparedStatement = connection.prepareStatement(sqlRequest);
+            if (parameters.length > 0) {
+                int cnt = 1;
+                for (Object parameter : parameters) {
+                    preparedStatement.setObject(cnt, parameter);
+                    cnt++;
+                }
+            }
+            preparedStatement.executeUpdate();
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+    }
+
+    private void delete (String sqlRequest, Object [] parameters) {
+        try (Connection connection = getDbConnection()) {
+            PreparedStatement preparedStatement = connection.prepareStatement(sqlRequest);
+            if (parameters.length > 0) {
+                int cnt = 1;
+                for (Object parameter : parameters) {
+                    preparedStatement.setObject(cnt, parameter);
+                    cnt++;
+                }
+            }
+            preparedStatement.executeUpdate();
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
     }
 
     private List<Object> getResultSet (String sqlRequest, Object [] parameters) {
@@ -66,17 +152,17 @@ public class ServiceDao {
         return result;
     }
 
-    private List<Object> getResultSet (String sqlRequest) {
+    private List<Object> getResultSet (String sqlRequest, int columnNumber) {
         List<Object> result = new ArrayList<>();
         try (Connection connection = getDbConnection()) {
 
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(sqlRequest);
 
-            int cnt = 1;
             while (resultSet.next()) {
-                result.add(resultSet.getObject(cnt));
-                cnt++;
+                for (int i = 1; i < columnNumber+1; i++) {
+                    result.add(resultSet.getObject(i));
+                }
             }
 
         } catch (SQLException throwables) {
