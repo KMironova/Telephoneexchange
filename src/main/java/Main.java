@@ -11,7 +11,7 @@ public class Main {
     static ServiceOutputConsole console = new ServiceOutputConsole();
 
     public static void main(String[] args) {
-
+        console.printMessage("Добро пожаловать в систему Телефонной станции.");
         while (true) {
             int message = firstAction();
             if (message == MessageСonstants.REGISTRATION_FAIL) {
@@ -33,8 +33,8 @@ public class Main {
     }
 
     private static int firstAction () {
-        console.printMessage("Добро пожаловать в систему Телефонной станции." + "\n" + "(1) Зарегистрироваться;" + "\n"
-                                                                                     + "(2) Войти в систему");
+        console.printMessage("Выберите действие:" + "\n" + "(1) Зарегистрироваться;" + "\n"
+                                                         + "(2) Войти в систему");
 
         Scanner scanner = new Scanner(System.in);
         int nextAction = scanner.nextInt();
@@ -90,7 +90,7 @@ public class Main {
     }
 
     private static boolean registration (String login,String password) {
-        return false;
+        return serviceService.addNewSub(login,password);
     }
 
     private static void addServiceToSub(int id) {

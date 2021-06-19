@@ -32,14 +32,27 @@ public class ServiceDao {
                             : 0;
     }
 
+    public boolean isSubExist (String login) {
+        List<Object> resultList = getResultSet("SELECT id_sub FROM telephone_exchange.sub_tb WHERE login = ?",
+                getParameters(login));
+        return resultList.size() != 0;
+    }
+
+    public int addNewSub (String login,String password) {
+        if (!(isSubExist(login))) {
+            update("INSERT INTO telephone_exchange.sub_tb (login,password) VALUES (?,?)",
+                    getParameters(login,password));
+            return MessageСonstants.SUCSESS;
+        } else return MessageСonstants.SUB_ALREADY_EXIST;
+    }
+
     public List <Object> getAllServices() {
         List<Object> resultList = getResultSet("SELECT * FROM telephone_exchange.service_tb;",3);
         return resultList.size() > 0 ? resultList
                                        : null;
     }
 
-    public List <Object> getAllServices (String login) {
-        int idSub = getIdSub(login);
+    public List <Object> getAllSubServices () {
         List<Object> resultList = getResultSet("SELECT * FROM telephone_exchange.service_tb b\n" +
                 "inner join telephone_exchange.sub_service_tb e ON \n" +
                 "b.id_service = e.id_service join telephone_exchange.sub_tb f ON e.id_sub = f.id_sub",8);
@@ -64,7 +77,7 @@ public class ServiceDao {
                if (isSubHaveThisService(subLogin,service)) {
 
                    int idSub = getIdSub(subLogin);
-                   delete("DELETE FROM `telephone_exchange`.`sub_service_tb` WHERE id_Service = ? AND id_sub = ?",
+                   update("DELETE FROM `telephone_exchange`.`sub_service_tb` WHERE id_Service = ? AND id_sub = ?",
                            getParameters(String.valueOf(service), String.valueOf(idSub)));
                    return MessageСonstants.SUCSESS;
                }else return MessageСonstants.SUB_HAVE_NOT_THIS_SERVICE;
@@ -93,23 +106,6 @@ public class ServiceDao {
     }
 
     private void update (String sqlRequest, Object [] parameters) {
-        try (Connection connection = getDbConnection()) {
-            PreparedStatement preparedStatement = connection.prepareStatement(sqlRequest);
-            if (parameters.length > 0) {
-                int cnt = 1;
-                for (Object parameter : parameters) {
-                    preparedStatement.setObject(cnt, parameter);
-                    cnt++;
-                }
-            }
-            preparedStatement.executeUpdate();
-
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-        }
-    }
-
-    private void delete (String sqlRequest, Object [] parameters) {
         try (Connection connection = getDbConnection()) {
             PreparedStatement preparedStatement = connection.prepareStatement(sqlRequest);
             if (parameters.length > 0) {

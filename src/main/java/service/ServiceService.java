@@ -31,6 +31,16 @@ public class ServiceService {
         } else return false;
     }
 
+    public boolean addNewSub (String login, String password) {
+        int message = serviceDao.addNewSub(login,password);
+
+        if (message == MessageСonstants.SUCSESS) {
+            return true;
+        } else if (message == MessageСonstants.SUB_ALREADY_EXIST) {
+            return false;
+        } else return false;
+    }
+
     public void addServiceToSub (int idService) {
         int message = serviceDao.addServiceToSub(Configs.login,idService);
         if (message == MessageСonstants.SERVICE_NOT_EXIST) {
@@ -57,7 +67,7 @@ public class ServiceService {
     }
 
     public void getAllSubServices () {
-        List <Object> listSubServices = serviceDao.getAllServices(Configs.login);
+        List <Object> listSubServices = serviceDao.getAllSubServices();
         List <Service> allServices = new ArrayList<>();
 
         for (int i = 0; i<listSubServices.size(); i+=8) {
